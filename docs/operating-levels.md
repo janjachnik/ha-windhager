@@ -29,6 +29,10 @@ hot water.
 `windhager.set_current_temp_compensation` action, which existed before this rule. It cannot be changed from an
 entity, only by calling the action on purpose (#92).
 
+**Domestic hot water:** the water heater entity writes `2/16` (one-time charge release) and `5/51` (charge target
+temperature), which both belong to the operation level (level 98, WW-Ladefreigabe).
+
+
 ## Heating circuit (function type 14)
 
 Measured on a BioWIN 2 with UMUMLZ modules on 2026-11-01, read-only. The API levels are the menu items, in the

@@ -116,6 +116,15 @@ Each heating circuit has these entities:
 | Outside temperature | The outside sensor's temperature. |
 | Comfort temperature correction, Current temperature correction | The corrections set on the heater, in K. |
 
+A circuit with domestic hot water configured also has these entities:
+
+| Entity | Description |
+| ------ | ----------- |
+| Water heater (*Hot water*) | The domestic hot water control: current temperature, target charge temperature, and operation modes (*Eco* for normal scheduled heating, *Performance* to trigger a one-time hot water charge). |
+| Hot water temperature | The current hot water temperature in the cylinder. |
+| Target hot water temperature | The scheduled hot water setpoint temperature. |
+| Hot water charging pump | On while the boiler is running the pump to charge the hot water cylinder. |
+
 The heater has these entities:
 
 | Entity | Description |

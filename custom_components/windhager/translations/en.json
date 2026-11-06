@@ -62,9 +62,18 @@
     "binary_sensor": {
       "heater_problem": {
         "name": "Heater problem"
+      },
+      "hot_water_charging_pump": {
+        "name": "Hot water charging pump"
       }
     },
     "sensor": {
+      "hot_water_temperature": {
+        "name": "Hot water temperature"
+      },
+      "target_hot_water_temperature": {
+        "name": "Target hot water temperature"
+      },
       "current_temperature": {
         "name": "Current temperature"
       },
@@ -206,9 +215,17 @@
           }
         }
       }
+    },
+    "water_heater": {
+      "hot_water": {
+        "name": "Hot water"
+      }
     }
   },
   "exceptions": {
+    "unsupported_operation_mode": {
+      "message": "The heater does not support switching to this operation mode."
+    },
     "write_auth_failed": {
       "message": "The heater refused the password: nothing was written. Enter its current password in the re-authentication notice."
     },

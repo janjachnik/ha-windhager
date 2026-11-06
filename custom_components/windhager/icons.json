@@ -1,5 +1,15 @@
 {
   "entity": {
+    "binary_sensor": {
+      "hot_water_charging_pump": {
+        "default": "mdi:pump"
+      }
+    },
+    "water_heater": {
+      "hot_water": {
+        "default": "mdi:water-boiler"
+      }
+    },
     "sensor": {
       "power_factor": {
         "default": "mdi:gauge"

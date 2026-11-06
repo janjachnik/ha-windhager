@@ -62,9 +62,18 @@
     "binary_sensor": {
       "heater_problem": {
         "name": "Kesselproblem"
+      },
+      "hot_water_charging_pump": {
+        "name": "Warmwasserladepumpe"
       }
     },
     "sensor": {
+      "hot_water_temperature": {
+        "name": "Warmwassertemperatur"
+      },
+      "target_hot_water_temperature": {
+        "name": "Warmwassersolltemperatur"
+      },
       "current_temperature": {
         "name": "Aktuelle Temperatur"
       },
@@ -206,9 +215,17 @@
           }
         }
       }
+    },
+    "water_heater": {
+      "hot_water": {
+        "name": "Warmwasser"
+      }
     }
   },
   "exceptions": {
+    "unsupported_operation_mode": {
+      "message": "Der Kessel unterstützt das Umschalten in diese Betriebsart nicht."
+    },
     "write_auth_failed": {
       "message": "Der Kessel hat das Passwort abgelehnt: nichts wurde geschrieben. Geben Sie sein aktuelles Passwort in der Benachrichtigung zur erneuten Authentifizierung ein."
     },

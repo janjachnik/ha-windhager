@@ -62,9 +62,18 @@
     "binary_sensor": {
       "heater_problem": {
         "name": "Problème de la chaudière"
+      },
+      "hot_water_charging_pump": {
+        "name": "Pompe de charge d'eau chaude"
       }
     },
     "sensor": {
+      "hot_water_temperature": {
+        "name": "Température d'eau chaude"
+      },
+      "target_hot_water_temperature": {
+        "name": "Température de consigne d'eau chaude"
+      },
       "current_temperature": {
         "name": "Température actuelle"
       },
@@ -206,9 +215,17 @@
           }
         }
       }
+    },
+    "water_heater": {
+      "hot_water": {
+        "name": "Eau chaude"
+      }
     }
   },
   "exceptions": {
+    "unsupported_operation_mode": {
+      "message": "La chaudière ne prend pas en charge ce mode de fonctionnement."
+    },
     "write_auth_failed": {
       "message": "La chaudière a refusé le mot de passe : rien n'a été écrit. Saisissez son mot de passe actuel dans la notification de réauthentification."
     },

@@ -254,7 +254,7 @@ class WindhagerHttpClient:
 
     slugify = staticmethod(slugify)
 
-    def _discover(self, json_devices: list[dict]) -> None:
+    async def _discover(self, json_devices: list[dict]) -> None:
         """The entities and datapoints of the modules /1 lists."""
         self.oids = set()
         self.slow_oids = set()
@@ -446,6 +446,16 @@ class WindhagerHttpClient:
                         **module,
                     }
                 )
+
+                if await self._circuit_has_hot_water(device_id, fct_id):
+                    self._add_hot_water(
+                        device_id,
+                        fct_id,
+                        circuit_device_id,
+                        circuit_suffix,
+                        function,
+                        module,
+                    )
 
             # Filter heaters
             functions = list(
@@ -715,6 +725,100 @@ class WindhagerHttpClient:
                     }
                 )
 
+    async def _circuit_has_hot_water(self, device_id: str, fct_id: str) -> bool:
+        """Whether a heating circuit module has a hot water circuit configured (rule 16, #83)."""
+        try:
+            data = await self.fetch(f"{device_id}{fct_id}/5/76/0")
+            return data.get("value") not in (None, "0", "-.-", "-")
+        except Exception as err:
+            _LOGGER.debug("Cannot check hot water for %s%s: %s", device_id, fct_id, err)
+            return False
+
+    def _add_hot_water(
+        self,
+        device_id: str,
+        fct_id: str,
+        circuit_device_id: str,
+        circuit_suffix: str,
+        function: dict,
+        module: dict,
+    ) -> None:
+        """The water heater and sensors of a circuit with domestic hot water."""
+        water_heater_id = f"{self.id_base}{device_id}{circuit_suffix}/dhw"
+        self.devices.append(
+            {
+                "id": self.slugify(water_heater_id),
+                "name": f"{function['name']} Hot Water",
+                "key": "hot_water",
+                "type": "water_heater",
+                "prefix": device_id,
+                "fct_id": fct_id,
+                "oids": [
+                    f"{fct_id}/0/4/0",
+                    f"{fct_id}/1/4/0",
+                    f"{fct_id}/2/16/0",
+                    f"{fct_id}/5/51/0",
+                ],
+                "device_id": self.slugify(circuit_device_id),
+                "device_name": function["name"],
+                **module,
+            }
+        )
+        self.oids.update(
+            [
+                f"{device_id}{fct_id}/0/4/0",
+                f"{device_id}{fct_id}/1/4/0",
+                f"{device_id}{fct_id}/2/16/0",
+                f"{device_id}{fct_id}/5/51/0",
+                f"{device_id}{fct_id}/1/66/0",
+            ]
+        )
+        # Hot water temperature (actual)
+        self.devices.append(
+            {
+                "id": self.slugify(
+                    f"{self.id_base}{device_id}{fct_id}/0/4/0"
+                ),
+                "key": "hot_water_temperature",
+                "name": f"{function['name']} Hot Water Temperature",
+                "type": "temperature",
+                "oid": f"{device_id}{fct_id}/0/4/0",
+                "device_id": self.slugify(circuit_device_id),
+                "device_name": function["name"],
+                **module,
+            }
+        )
+        # Target hot water temperature
+        self.devices.append(
+            {
+                "id": self.slugify(
+                    f"{self.id_base}{device_id}{fct_id}/1/4/0"
+                ),
+                "key": "target_hot_water_temperature",
+                "name": f"{function['name']} Target Hot Water Temperature",
+                "type": "temperature",
+                "oid": f"{device_id}{fct_id}/1/4/0",
+                "device_id": self.slugify(circuit_device_id),
+                "device_name": function["name"],
+                **module,
+            }
+        )
+        # Hot water charging pump
+        self.devices.append(
+            {
+                "id": self.slugify(
+                    f"{self.id_base}{device_id}{fct_id}/1/66/0"
+                ),
+                "key": "hot_water_charging_pump",
+                "name": f"{function['name']} Hot Water Charging Pump",
+                "type": "charging_pump",
+                "oid": f"{device_id}{fct_id}/1/66/0",
+                "device_id": self.slugify(circuit_device_id),
+                "device_name": function["name"],
+                **module,
+            }
+        )
+
     async def _check_modules(self) -> None:
         """Every MODULES_CHECK_POLLS polls, discover the modules again if /1 lists others."""
         self._polls_since_modules_check += 1
@@ -733,12 +837,12 @@ class WindhagerHttpClient:
             return
         if signature != self._modules_signature:
             _LOGGER.info("The heater's modules changed: discovering them again")
-            self._discover(json_devices)
+            await self._discover(json_devices)
 
     async def fetch_all(self):
         if self.oids is None:
             # Fetch all devices on the network
-            self._discover(await self.fetch("/1"))
+            await self._discover(await self.fetch("/1"))
         else:
             await self._check_modules()
 
