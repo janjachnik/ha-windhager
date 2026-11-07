@@ -223,9 +223,6 @@
     }
   },
   "exceptions": {
-    "unsupported_operation_mode": {
-      "message": "La chaudière ne prend pas en charge ce mode de fonctionnement."
-    },
     "write_auth_failed": {
       "message": "La chaudière a refusé le mot de passe : rien n'a été écrit. Saisissez son mot de passe actuel dans la notification de réauthentification."
     },
@@ -255,6 +252,20 @@
           "description": "La correction en K, de -3,5 à 3,5."
         }
       }
+    },
+    "boost_hot_water": {
+      "name": "Booster l'eau chaude",
+      "description": "Démarre une charge unique d'eau chaude sanitaire, facultativement à une température de consigne spécifique.",
+      "fields": {
+        "temperature": {
+          "name": "Température de consigne",
+          "description": "La température de consigne pour la charge unique en °C (de 10,0 à 75,0)."
+        }
+      }
+    },
+    "cancel_hot_water_boost": {
+      "name": "Annuler le boost d'eau chaude",
+      "description": "Arrête une charge unique d'eau chaude sanitaire en cours."
     }
   }
 }

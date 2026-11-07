@@ -223,9 +223,6 @@
     }
   },
   "exceptions": {
-    "unsupported_operation_mode": {
-      "message": "The heater does not support switching to this operation mode."
-    },
     "write_auth_failed": {
       "message": "The heater refused the password: nothing was written. Enter its current password in the re-authentication notice."
     },
@@ -255,6 +252,20 @@
           "description": "The correction in K, from -3.5 to 3.5."
         }
       }
+    },
+    "boost_hot_water": {
+      "name": "Boost hot water",
+      "description": "Starts a one-time domestic hot water charge, optionally at a specific target temperature.",
+      "fields": {
+        "temperature": {
+          "name": "Target temperature",
+          "description": "The target temperature for the one-time charge in °C (from 10.0 to 75.0)."
+        }
+      }
+    },
+    "cancel_hot_water_boost": {
+      "name": "Cancel hot water boost",
+      "description": "Stops an active one-time domestic hot water charge."
     }
   }
 }

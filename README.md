@@ -120,7 +120,7 @@ A circuit with domestic hot water configured also has these entities:
 
 | Entity | Description |
 | ------ | ----------- |
-| Water heater (*Hot water*) | The domestic hot water control: current temperature, target charge temperature, and operation modes (*Eco* for normal scheduled heating, *Performance* to trigger a one-time hot water charge). |
+| Water heater (*Hot water*) | The domestic hot water monitor: shows the cylinder's current temperature and target temperature (the boost target while a boost charge is active, otherwise the scheduled target temperature). Shows *Off* when the heater is switched off, and *Performance* while a boost charge is active. |
 | Hot water temperature | The current hot water temperature in the cylinder. |
 | Target hot water temperature | The scheduled hot water setpoint temperature. |
 | Hot water charging pump | On while the boiler is running the pump to charge the hot water cylinder. |
@@ -176,6 +176,22 @@ temperature the main climate shows.
 | `compensation` | Required. The correction in K, from -3.5 to 3.5, in steps of 0.1. |
 
 The action targets either of the circuit's climates: both write the circuit's correction.
+
+### `windhager.boost_hot_water`
+
+Starts a one-time domestic hot water charge (`WW-Ladefreigabe`), optionally with a specific target charge temperature.
+
+| Field | Description |
+| ----- | ----------- |
+| `temperature` | Optional. The target temperature for the one-time charge in °C, from 10.0 to 75.0, in steps of 0.5. |
+
+The action targets a circuit's water heater entity.
+
+### `windhager.cancel_hot_water_boost`
+
+Stops an active one-time domestic hot water charge (`WW-Ladefreigabe`).
+
+The action targets a circuit's water heater entity.
 
 ## Examples
 

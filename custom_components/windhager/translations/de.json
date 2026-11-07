@@ -223,9 +223,6 @@
     }
   },
   "exceptions": {
-    "unsupported_operation_mode": {
-      "message": "Der Kessel unterstützt das Umschalten in diese Betriebsart nicht."
-    },
     "write_auth_failed": {
       "message": "Der Kessel hat das Passwort abgelehnt: nichts wurde geschrieben. Geben Sie sein aktuelles Passwort in der Benachrichtigung zur erneuten Authentifizierung ein."
     },
@@ -255,6 +252,20 @@
           "description": "Die Korrektur in K, von -3,5 bis 3,5."
         }
       }
+    },
+    "boost_hot_water": {
+      "name": "Warmwasser-Einmalladung starten",
+      "description": "Startet eine einmalige Warmwasserladung, optional mit einer bestimmten Solltemperatur.",
+      "fields": {
+        "temperature": {
+          "name": "Solltemperatur",
+          "description": "Die Solltemperatur für die Einmalladung in °C (von 10,0 bis 75,0)."
+        }
+      }
+    },
+    "cancel_hot_water_boost": {
+      "name": "Warmwasser-Einmalladung abbrechen",
+      "description": "Bricht eine aktive einmalige Warmwasserladung ab."
     }
   }
 }

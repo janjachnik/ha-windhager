@@ -1,6 +1,6 @@
-"""The water heater entity for domestic hot water and its charging pump."""
+"""The water heater entity for domestic hot water, its charging pump, and boost actions."""
 
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, call
 
 import pytest
 from homeassistant.components.water_heater import (
@@ -10,6 +10,7 @@ from homeassistant.components.water_heater import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers.translation import async_get_translations
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.windhager.client import WindhagerHttpClient
@@ -61,7 +62,7 @@ async def set_up_dhw(
     await hass.async_block_till_done()
 
 
-async def test_a_circuit_with_hot_water_creates_water_heater_and_pump(
+async def test_a_circuit_with_hot_water_creates_read_only_water_heater_and_pump(
     hass: HomeAssistant, entry: MockConfigEntry, client: MagicMock
 ) -> None:
     await set_up_dhw(hass, entry, client)
@@ -71,10 +72,7 @@ async def test_a_circuit_with_hot_water_creates_water_heater_and_pump(
     assert state.state == STATE_ECO
     assert state.attributes["current_temperature"] == 52.5
     assert state.attributes["temperature"] == 55.0
-    assert state.attributes["min_temp"] == 10.0
-    assert state.attributes["max_temp"] == 75.0
-    assert state.attributes["target_temp_step"] == 0.5
-    assert state.attributes["operation_list"] == [STATE_ECO, STATE_PERFORMANCE]
+    assert state.attributes["supported_features"] == 0
 
     pump = hass.states.get("binary_sensor.heating_circuit_hot_water_charging_pump")
     assert pump is not None
@@ -91,7 +89,7 @@ async def test_charging_pump_state(
     assert pump.state == expected_state
 
 
-async def test_water_heater_charging_mode_shows_performance_and_charge_temp(
+async def test_water_heater_charging_mode_shows_performance_and_boost_target(
     hass: HomeAssistant, entry: MockConfigEntry, client: MagicMock
 ) -> None:
     await set_up_dhw(
@@ -104,6 +102,21 @@ async def test_water_heater_charging_mode_shows_performance_and_charge_temp(
     state = hass.states.get("water_heater.heating_circuit_hot_water")
     assert state.state == STATE_PERFORMANCE
     assert state.attributes["temperature"] == 60.0
+
+
+async def test_water_heater_charging_mode_falls_back_when_boost_target_missing(
+    hass: HomeAssistant, entry: MockConfigEntry, client: MagicMock
+) -> None:
+    await set_up_dhw(
+        hass,
+        entry,
+        client,
+        oids={**DHW_OIDS, "/1/15/0/2/16/0": "1", "/1/15/0/5/51/0": None},
+    )
+
+    state = hass.states.get("water_heater.heating_circuit_hot_water")
+    assert state.state == STATE_PERFORMANCE
+    assert state.attributes["temperature"] == 55.0
 
 
 async def test_water_heater_off_when_heater_is_off(
@@ -130,84 +143,65 @@ async def test_water_heater_off_when_heater_is_off(
 
     state = hass.states.get("water_heater.heating_circuit_hot_water")
     assert state.state == STATE_OFF
-    assert state.attributes["operation_list"] == [STATE_OFF]
 
 
-async def test_set_operation_mode_performance_starts_charge(
+async def test_boost_hot_water_starts_charge_without_temperature(
     hass: HomeAssistant, entry: MockConfigEntry, client: MagicMock
 ) -> None:
     await set_up_dhw(hass, entry, client)
 
     await hass.services.async_call(
-        "water_heater",
-        "set_operation_mode",
-        {"entity_id": "water_heater.heating_circuit_hot_water", "operation_mode": STATE_PERFORMANCE},
+        "windhager",
+        "boost_hot_water",
+        {"entity_id": "water_heater.heating_circuit_hot_water"},
         blocking=True,
     )
 
     client.update.assert_awaited_once_with("/1/15/0/2/16/0", "1")
 
 
-async def test_set_operation_mode_eco_stops_charge(
+async def test_boost_hot_water_sets_temperature_and_starts_charge(
+    hass: HomeAssistant, entry: MockConfigEntry, client: MagicMock
+) -> None:
+    await set_up_dhw(hass, entry, client)
+
+    await hass.services.async_call(
+        "windhager",
+        "boost_hot_water",
+        {"entity_id": "water_heater.heating_circuit_hot_water", "temperature": 58.0},
+        blocking=True,
+    )
+
+    assert client.update.await_args_list == [
+        call("/1/15/0/5/51/0", "58.0"),
+        call("/1/15/0/2/16/0", "1"),
+    ]
+
+
+async def test_cancel_hot_water_boost_stops_charge(
     hass: HomeAssistant, entry: MockConfigEntry, client: MagicMock
 ) -> None:
     await set_up_dhw(hass, entry, client, oids={**DHW_OIDS, "/1/15/0/2/16/0": "1"})
 
     await hass.services.async_call(
-        "water_heater",
-        "set_operation_mode",
-        {"entity_id": "water_heater.heating_circuit_hot_water", "operation_mode": STATE_ECO},
+        "windhager",
+        "cancel_hot_water_boost",
+        {"entity_id": "water_heater.heating_circuit_hot_water"},
         blocking=True,
     )
 
     client.update.assert_awaited_once_with("/1/15/0/2/16/0", "0")
 
 
-async def test_set_operation_mode_unsupported_raises(
-    hass: HomeAssistant, entry: MockConfigEntry, client: MagicMock
-) -> None:
-    await set_up_dhw(hass, entry, client)
-
-    # Home Assistant validates against operation_list
-    with pytest.raises(HomeAssistantError) as err:
-        await hass.services.async_call(
-            "water_heater",
-            "set_operation_mode",
-            {"entity_id": "water_heater.heating_circuit_hot_water", "operation_mode": "electric"},
-            blocking=True,
-        )
-    assert err.value.translation_key == "not_valid_operation_mode"
-
-    entity = hass.data["entity_components"]["water_heater"].get_entity("water_heater.heating_circuit_hot_water")
-    with pytest.raises(HomeAssistantError) as err:
-        await entity.async_set_operation_mode("invalid")
-    assert err.value.translation_key == "unsupported_operation_mode"
-
-
-async def test_set_temperature_sets_charge_temp(
-    hass: HomeAssistant, entry: MockConfigEntry, client: MagicMock
-) -> None:
-    await set_up_dhw(hass, entry, client)
-
-    await hass.services.async_call(
-        "water_heater",
-        "set_temperature",
-        {"entity_id": "water_heater.heating_circuit_hot_water", "temperature": 58.0},
-        blocking=True,
-    )
-
-    client.update.assert_awaited_once_with("/1/15/0/5/51/0", "58.0")
-
-
 @pytest.mark.parametrize(
     ("failure", "translation_key"),
     [
-        (WriteFailed("/1/15/0/5/51/0", 500), "write_refused"),
+        (WriteFailed("/1/15/0/2/16/0", 500), "write_refused"),
         (CannotConnect("no answer"), "write_cannot_connect"),
         (InvalidAuth("refused"), "write_auth_failed"),
     ],
 )
-async def test_a_failed_write_fails_with_reason(
+async def test_a_failed_boost_fails_with_reason(
     hass: HomeAssistant, entry: MockConfigEntry, client: MagicMock, failure: Exception, translation_key: str
 ) -> None:
     await set_up_dhw(hass, entry, client)
@@ -215,9 +209,9 @@ async def test_a_failed_write_fails_with_reason(
 
     with pytest.raises(HomeAssistantError) as failed:
         await hass.services.async_call(
-            "water_heater",
-            "set_temperature",
-            {"entity_id": "water_heater.heating_circuit_hot_water", "temperature": 58.0},
+            "windhager",
+            "boost_hot_water",
+            {"entity_id": "water_heater.heating_circuit_hot_water"},
             blocking=True,
         )
 
@@ -225,7 +219,7 @@ async def test_a_failed_write_fails_with_reason(
     assert failed.value.translation_key == translation_key
 
 
-async def test_a_write_refusing_password_starts_reauth(
+async def test_a_boost_refusing_password_starts_reauth(
     hass: HomeAssistant, entry: MockConfigEntry, client: MagicMock
 ) -> None:
     await set_up_dhw(hass, entry, client)
@@ -233,15 +227,30 @@ async def test_a_write_refusing_password_starts_reauth(
 
     with pytest.raises(HomeAssistantError):
         await hass.services.async_call(
-            "water_heater",
-            "set_operation_mode",
-            {"entity_id": "water_heater.heating_circuit_hot_water", "operation_mode": STATE_PERFORMANCE},
+            "windhager",
+            "boost_hot_water",
+            {"entity_id": "water_heater.heating_circuit_hot_water"},
             blocking=True,
         )
     await hass.async_block_till_done()
 
     [flow] = hass.config_entries.flow.async_progress()
     assert flow["context"]["source"] == "reauth"
+
+
+@pytest.mark.parametrize("language", ["en", "fr", "de"])
+async def test_the_boost_actions_are_translated(
+    hass: HomeAssistant, entry: MockConfigEntry, client: MagicMock, language: str
+) -> None:
+    await set_up_dhw(hass, entry, client)
+
+    translations = await async_get_translations(hass, language, "services", ["windhager"])
+
+    assert translations["component.windhager.services.boost_hot_water.name"]
+    assert translations["component.windhager.services.boost_hot_water.description"]
+    assert translations["component.windhager.services.boost_hot_water.fields.temperature.name"]
+    assert translations["component.windhager.services.cancel_hot_water_boost.name"]
+    assert translations["component.windhager.services.cancel_hot_water_boost.description"]
 
 
 async def test_discovery_adds_hot_water_when_active() -> None:

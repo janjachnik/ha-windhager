@@ -12,7 +12,7 @@ from homeassistant.components.water_heater import (
     WaterHeaterEntity,
     WaterHeaterEntityFeature,
 )
-from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
+from homeassistant.const import UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -48,12 +48,7 @@ class WindhagerWaterHeater(WindhagerEntity, WaterHeaterEntity):
     """Windhager water heater entity for domestic hot water."""
 
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
-    _attr_supported_features = (
-        WaterHeaterEntityFeature.OPERATION_MODE | WaterHeaterEntityFeature.TARGET_TEMPERATURE
-    )
-    _attr_min_temp = 10.0
-    _attr_max_temp = 75.0
-    _attr_target_temperature_step = 0.5
+    _attr_supported_features = WaterHeaterEntityFeature(0)
     _attr_translation_key = "hot_water"
 
     def __init__(
@@ -79,19 +74,12 @@ class WindhagerWaterHeater(WindhagerEntity, WaterHeaterEntity):
 
     @property
     def current_operation(self) -> str:
-        """Return the current operation mode: off when the heater is off, performance when charging, else eco."""
+        """Return current operation: off when heater is off, performance when boosting, else eco."""
         if self.heater_operating_mode() in HEATER_OFF_MODES:
             return STATE_OFF
         if int(self.get_oid_value("/2/16/0") or 0) == 1:
             return STATE_PERFORMANCE
         return STATE_ECO
-
-    @property
-    def operation_list(self) -> list[str]:
-        """Return the list of available operation modes."""
-        if self.heater_operating_mode() in HEATER_OFF_MODES:
-            return [STATE_OFF]
-        return [STATE_ECO, STATE_PERFORMANCE]
 
     @property
     def current_temperature(self) -> float | None:
@@ -100,10 +88,10 @@ class WindhagerWaterHeater(WindhagerEntity, WaterHeaterEntity):
 
     @property
     def target_temperature(self) -> float | None:
-        """Return the target temperature (charge temperature while charging, else scheduled setpoint)."""
+        """Return the target temperature: the boost setpoint while boosting, else scheduled."""
         if int(self.get_oid_value("/2/16/0") or 0) == 1:
             return self.get_oid_value("/5/51/0") or self.get_oid_value("/1/4/0")
-        return self.get_oid_value("/1/4/0") or self.get_oid_value("/5/51/0")
+        return self.get_oid_value("/1/4/0")
 
     async def _async_write(self, path: str, value: str) -> None:
         """Write a datapoint of the circuit; a failure is an error the user sees."""
@@ -125,22 +113,14 @@ class WindhagerWaterHeater(WindhagerEntity, WaterHeaterEntity):
                 translation_domain=DOMAIN, translation_key="write_cannot_connect"
             ) from err
 
-    async def async_set_operation_mode(self, operation_mode: str) -> None:
-        """Set operation mode: performance starts one-time charge, eco stops it."""
-        if operation_mode == STATE_PERFORMANCE:
-            await self._async_write("/2/16/0", "1")
-        elif operation_mode == STATE_ECO:
-            await self._async_write("/2/16/0", "0")
-        else:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN,
-                translation_key="unsupported_operation_mode",
-            )
+    async def boost_hot_water(self, temperature: float | None = None) -> None:
+        """Trigger a one-time hot water charge release (rule 16, level 98)."""
+        if temperature is not None:
+            await self._async_write("/5/51/0", str(temperature))
+        await self._async_write("/2/16/0", "1")
         await self.coordinator.async_request_refresh()
 
-    async def async_set_temperature(self, **kwargs: Any) -> None:
-        """Set target charge temperature."""
-        temp = kwargs[ATTR_TEMPERATURE]
-        await self._async_write("/5/51/0", str(temp))
+    async def cancel_hot_water_boost(self) -> None:
+        """Cancel a one-time hot water charge release (rule 16, level 98)."""
+        await self._async_write("/2/16/0", "0")
         await self.coordinator.async_request_refresh()
-

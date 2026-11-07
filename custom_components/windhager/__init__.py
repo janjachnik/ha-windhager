@@ -6,6 +6,7 @@ import logging
 
 import voluptuous as vol
 from homeassistant.components.climate import DOMAIN as CLIMATE_DOMAIN
+from homeassistant.components.water_heater import DOMAIN as WATER_HEATER_DOMAIN
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
@@ -48,6 +49,26 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             ),
         },
         func="set_current_temp_compensation",
+    )
+    service.async_register_platform_entity_service(
+        hass,
+        DOMAIN,
+        "boost_hot_water",
+        entity_domain=WATER_HEATER_DOMAIN,
+        schema={
+            vol.Optional("temperature"): vol.All(
+                vol.Coerce(float), vol.Range(min=10.0, max=75.0)
+            ),
+        },
+        func="boost_hot_water",
+    )
+    service.async_register_platform_entity_service(
+        hass,
+        DOMAIN,
+        "cancel_hot_water_boost",
+        entity_domain=WATER_HEATER_DOMAIN,
+        schema={},
+        func="cancel_hot_water_boost",
     )
     return True
 
