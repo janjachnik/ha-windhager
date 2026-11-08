@@ -48,10 +48,16 @@ async def test_a_circuit_climates_and_sensors_share_their_module_device(
     await set_up(hass, entry, client)
 
     circuit = device_of(hass, "climate.circuit")
+    dhw = device_of(hass, "water_heater.circuit_hot_water")
 
     assert device_of(hass, "climate.circuit_without_bias") == circuit
     assert device_of(hass, "sensor.circuit_outside_temperature") == circuit
-    assert len(dr.async_entries_for_config_entry(dr.async_get(hass), entry.entry_id)) == 2
+    assert device_of(hass, "switch.circuit_hot_water_boost") == dhw
+    assert device_of(hass, "number.circuit_hot_water_boost_temperature") == dhw
+    assert device_of(hass, "sensor.circuit_hot_water_temperature") == dhw
+    assert circuit != dhw
+    assert dhw.name == "Circuit Hot Water"
+    assert len(dr.async_entries_for_config_entry(dr.async_get(hass), entry.entry_id)) == 3
 
 
 async def test_a_device_shows_its_module_model_and_chip_id(

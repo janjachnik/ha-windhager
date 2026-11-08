@@ -10,6 +10,16 @@
         "default": "mdi:water-boiler"
       }
     },
+    "switch": {
+      "hot_water_boost": {
+        "default": "mdi:water-boiler-auto"
+      }
+    },
+    "number": {
+      "hot_water_boost_temperature": {
+        "default": "mdi:thermometer-chevron-up"
+      }
+    },
     "sensor": {
       "power_factor": {
         "default": "mdi:gauge"

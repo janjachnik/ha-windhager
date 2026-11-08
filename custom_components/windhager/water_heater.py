@@ -6,7 +6,6 @@ import logging
 from typing import Any
 
 from homeassistant.components.water_heater import (
-    STATE_ECO,
     STATE_OFF,
     STATE_PERFORMANCE,
     WaterHeaterEntity,
@@ -25,6 +24,9 @@ from .exceptions import CannotConnect, InvalidAuth, WriteFailed
 from .helpers import get_oid_value, parse_value
 
 _LOGGER = logging.getLogger(__name__)
+
+# Water heater state when following the boiler schedule (like Tado)
+STATE_AUTO = "auto"
 
 # One write at a time to the heater: its API answers the requests one after the other
 PARALLEL_UPDATES = 1
@@ -47,6 +49,7 @@ async def async_setup_entry(
 class WindhagerWaterHeater(WindhagerEntity, WaterHeaterEntity):
     """Windhager water heater entity for domestic hot water."""
 
+    _attr_name = None
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_supported_features = WaterHeaterEntityFeature(0)
     _attr_translation_key = "hot_water"
@@ -74,12 +77,12 @@ class WindhagerWaterHeater(WindhagerEntity, WaterHeaterEntity):
 
     @property
     def current_operation(self) -> str:
-        """Return current operation: off when heater is off, performance when boosting, else eco."""
+        """Return current operation: off when heater is off, performance when boosting, else auto."""
         if self.heater_operating_mode() in HEATER_OFF_MODES:
             return STATE_OFF
         if int(self.get_oid_value("/2/16/0") or 0) == 1:
             return STATE_PERFORMANCE
-        return STATE_ECO
+        return STATE_AUTO
 
     @property
     def current_temperature(self) -> float | None:

@@ -64,15 +64,25 @@
         "name": "Kesselproblem"
       },
       "hot_water_charging_pump": {
-        "name": "Warmwasserladepumpe"
+        "name": "Ladepumpe"
+      }
+    },
+    "switch": {
+      "hot_water_boost": {
+        "name": "Boost"
+      }
+    },
+    "number": {
+      "hot_water_boost_temperature": {
+        "name": "Push-Solltemperatur"
       }
     },
     "sensor": {
       "hot_water_temperature": {
-        "name": "Warmwassertemperatur"
+        "name": "Temperatur"
       },
       "target_hot_water_temperature": {
-        "name": "Warmwassersolltemperatur"
+        "name": "Solltemperatur"
       },
       "current_temperature": {
         "name": "Aktuelle Temperatur"
@@ -218,7 +228,12 @@
     },
     "water_heater": {
       "hot_water": {
-        "name": "Warmwasser"
+        "name": "Warmwasser",
+        "state": {
+          "auto": "Zeitprogramm",
+          "performance": "Einmal-Ladung",
+          "off": "Aus"
+        }
       }
     }
   },

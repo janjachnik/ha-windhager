@@ -64,15 +64,25 @@
         "name": "Heater problem"
       },
       "hot_water_charging_pump": {
-        "name": "Hot water charging pump"
+        "name": "Charging pump"
+      }
+    },
+    "switch": {
+      "hot_water_boost": {
+        "name": "Boost"
+      }
+    },
+    "number": {
+      "hot_water_boost_temperature": {
+        "name": "Boost temperature"
       }
     },
     "sensor": {
       "hot_water_temperature": {
-        "name": "Hot water temperature"
+        "name": "Temperature"
       },
       "target_hot_water_temperature": {
-        "name": "Target hot water temperature"
+        "name": "Target temperature"
       },
       "current_temperature": {
         "name": "Current temperature"
@@ -218,7 +228,12 @@
     },
     "water_heater": {
       "hot_water": {
-        "name": "Hot water"
+        "name": "Hot water",
+        "state": {
+          "auto": "Schedule",
+          "performance": "Single charge",
+          "off": "Off"
+        }
       }
     }
   },

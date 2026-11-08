@@ -29,7 +29,7 @@ hot water.
 `windhager.set_current_temp_compensation` action, which existed before this rule. It cannot be changed from an
 entity, only by calling the action on purpose (#92).
 
-**Domestic hot water:** the `windhager.boost_hot_water` and `windhager.cancel_hot_water_boost` actions write
+**Domestic hot water:** the `hot_water_boost` switch, `hot_water_boost_temperature` number setting, and `windhager.boost_hot_water` / `windhager.cancel_hot_water_boost` actions write
 `2/16` (one-time charge release) and `5/51` (charge target temperature), which both belong to the operation level
 (level 98, WW-Ladefreigabe).
 

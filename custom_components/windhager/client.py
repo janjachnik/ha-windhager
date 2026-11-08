@@ -744,6 +744,14 @@ class WindhagerHttpClient:
         module: dict,
     ) -> None:
         """The water heater and sensors of a circuit with domestic hot water."""
+        dhw_device_id = f"{circuit_device_id}_dhw"
+        dhw_device_name = f"{function['name']} Hot Water"
+        dhw_module = {
+            "device_id": self.slugify(dhw_device_id),
+            "device_name": dhw_device_name,
+            "device_model": "Domestic Hot Water",
+            "device_serial_number": module.get("device_serial_number"),
+        }
         water_heater_id = f"{self.id_base}{device_id}{circuit_suffix}/dhw"
         self.devices.append(
             {
@@ -759,9 +767,7 @@ class WindhagerHttpClient:
                     f"{fct_id}/2/16/0",
                     f"{fct_id}/5/51/0",
                 ],
-                "device_id": self.slugify(circuit_device_id),
-                "device_name": function["name"],
-                **module,
+                **dhw_module,
             }
         )
         self.oids.update(
@@ -773,6 +779,33 @@ class WindhagerHttpClient:
                 f"{device_id}{fct_id}/1/66/0",
             ]
         )
+        # Hot water boost switch
+        self.devices.append(
+            {
+                "id": self.slugify(f"{self.id_base}{device_id}{circuit_suffix}/dhw_boost"),
+                "key": "hot_water_boost",
+                "name": f"{function['name']} Hot Water Boost",
+                "type": "switch",
+                "prefix": device_id,
+                "fct_id": fct_id,
+                "oid": f"{device_id}{fct_id}/2/16/0",
+                **dhw_module,
+            }
+        )
+        # Hot water boost target temperature setting
+        self.devices.append(
+            {
+                "id": self.slugify(f"{self.id_base}{device_id}{circuit_suffix}/dhw_boost_temp"),
+                "key": "hot_water_boost_temperature",
+                "name": f"{function['name']} Hot Water Boost Temperature",
+                "type": "number",
+                "prefix": device_id,
+                "fct_id": fct_id,
+                "oid": f"{device_id}{fct_id}/5/51/0",
+                "entity_category": "config",
+                **dhw_module,
+            }
+        )
         # Hot water temperature (actual)
         self.devices.append(
             {
@@ -783,9 +816,7 @@ class WindhagerHttpClient:
                 "name": f"{function['name']} Hot Water Temperature",
                 "type": "temperature",
                 "oid": f"{device_id}{fct_id}/0/4/0",
-                "device_id": self.slugify(circuit_device_id),
-                "device_name": function["name"],
-                **module,
+                **dhw_module,
             }
         )
         # Target hot water temperature
@@ -795,12 +826,10 @@ class WindhagerHttpClient:
                     f"{self.id_base}{device_id}{fct_id}/1/4/0"
                 ),
                 "key": "target_hot_water_temperature",
-                "name": f"{function['name']} Target Hot Water Temperature",
+                "name": f"{function['name']} Hot Water Target Temperature",
                 "type": "temperature",
                 "oid": f"{device_id}{fct_id}/1/4/0",
-                "device_id": self.slugify(circuit_device_id),
-                "device_name": function["name"],
-                **module,
+                **dhw_module,
             }
         )
         # Hot water charging pump
@@ -813,9 +842,7 @@ class WindhagerHttpClient:
                 "name": f"{function['name']} Hot Water Charging Pump",
                 "type": "charging_pump",
                 "oid": f"{device_id}{fct_id}/1/66/0",
-                "device_id": self.slugify(circuit_device_id),
-                "device_name": function["name"],
-                **module,
+                **dhw_module,
             }
         )
 

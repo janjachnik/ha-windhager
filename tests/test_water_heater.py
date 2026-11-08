@@ -4,7 +4,6 @@ from unittest.mock import AsyncMock, MagicMock, call
 
 import pytest
 from homeassistant.components.water_heater import (
-    STATE_ECO,
     STATE_OFF,
     STATE_PERFORMANCE,
 )
@@ -23,8 +22,9 @@ CIRCUIT_DHW = {
     "type": "water_heater",
     "prefix": "/1/15",
     "fct_id": "/0",
-    "device_id": "circuit",
-    "device_name": "Heating circuit",
+    "device_id": "circuit_dhw",
+    "device_name": "Heating circuit Hot Water",
+    "via_device": "circuit",
 }
 PUMP_SENSOR = {
     "id": "circuit_pump",
@@ -33,8 +33,9 @@ PUMP_SENSOR = {
     "type": "charging_pump",
     "prefix": "/1/15",
     "fct_id": "/0",
-    "device_id": "circuit",
-    "device_name": "Heating circuit",
+    "device_id": "circuit_dhw",
+    "device_name": "Heating circuit Hot Water",
+    "via_device": "circuit",
     "oid": "/1/15/0/1/66/0",
 }
 DHW_OIDS = {
@@ -62,14 +63,14 @@ async def set_up_dhw(
     await hass.async_block_till_done()
 
 
-async def test_a_circuit_with_hot_water_creates_read_only_water_heater_and_pump(
+async def test_a_circuit_with_hot_water_creates_water_heater_and_pump(
     hass: HomeAssistant, entry: MockConfigEntry, client: MagicMock
 ) -> None:
     await set_up_dhw(hass, entry, client)
 
     state = hass.states.get("water_heater.heating_circuit_hot_water")
     assert state is not None
-    assert state.state == STATE_ECO
+    assert state.state == "auto"
     assert state.attributes["current_temperature"] == 52.5
     assert state.attributes["temperature"] == 55.0
     assert state.attributes["supported_features"] == 0
@@ -283,6 +284,8 @@ async def test_discovery_adds_hot_water_when_active() -> None:
 
     types = [device["type"] for device in data["devices"]]
     assert "water_heater" in types
+    assert "switch" in types
+    assert "number" in types
     assert "charging_pump" in types
     assert "/1/15/0/0/4/0" in client.oids
     assert "/1/15/0/1/4/0" in client.oids
@@ -327,5 +330,7 @@ async def test_discovery_does_not_add_hot_water_when_inactive_or_failing(answer:
 
     types = [device["type"] for device in data["devices"]]
     assert "water_heater" not in types
+    assert "switch" not in types
+    assert "number" not in types
     assert "charging_pump" not in types
     assert "/1/15/0/0/4/0" not in client.oids

@@ -64,15 +64,25 @@
         "name": "Problème de la chaudière"
       },
       "hot_water_charging_pump": {
-        "name": "Pompe de charge d'eau chaude"
+        "name": "Pompe de charge"
+      }
+    },
+    "switch": {
+      "hot_water_boost": {
+        "name": "Boost"
+      }
+    },
+    "number": {
+      "hot_water_boost_temperature": {
+        "name": "Température de boost"
       }
     },
     "sensor": {
       "hot_water_temperature": {
-        "name": "Température d'eau chaude"
+        "name": "Température"
       },
       "target_hot_water_temperature": {
-        "name": "Température de consigne d'eau chaude"
+        "name": "Température de consigne"
       },
       "current_temperature": {
         "name": "Température actuelle"
@@ -218,7 +228,12 @@
     },
     "water_heater": {
       "hot_water": {
-        "name": "Eau chaude"
+        "name": "Eau chaude",
+        "state": {
+          "auto": "Programmation",
+          "performance": "Charge unique",
+          "off": "Éteint"
+        }
       }
     }
   },

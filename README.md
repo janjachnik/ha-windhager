@@ -116,14 +116,16 @@ Each heating circuit has these entities:
 | Outside temperature | The outside sensor's temperature. |
 | Comfort temperature correction, Current temperature correction | The corrections set on the heater, in K. |
 
-A circuit with domestic hot water configured also has these entities:
+A circuit with domestic hot water configured has a device of its own (*<Circuit> Hot Water*), which can be placed in its own area (such as an airing cupboard or upstairs). It holds these entities:
 
 | Entity | Description |
 | ------ | ----------- |
-| Water heater (*Hot water*) | The domestic hot water monitor: shows the cylinder's current temperature and target temperature (the boost target while a boost charge is active, otherwise the scheduled target temperature). Shows *Off* when the heater is switched off, and *Performance* while a boost charge is active. |
-| Hot water temperature | The current hot water temperature in the cylinder. |
-| Target hot water temperature | The scheduled hot water setpoint temperature. |
-| Hot water charging pump | On while the boiler is running the pump to charge the hot water cylinder. |
+| Water heater (*Hot water*) | The domestic hot water monitor: shows the cylinder's current temperature and target temperature (the boost target while a boost charge is active, otherwise the scheduled target temperature). Shows *Off* when the heater is switched off, *Single charge* while a boost charge is active, and *Schedule* (`auto`) when following the schedule. |
+| Hot water boost switch | On while a one-time hot water charge release (`WW-Ladefreigabe`) is active. Turn on to start a charge, or off to cancel. |
+| Hot water boost temperature | The target temperature setpoint for a one-time charge in °C (from 10.0 to 75.0, in steps of 0.5). |
+| Temperature | The current hot water temperature in the cylinder. |
+| Target temperature | The scheduled hot water setpoint temperature. |
+| Charging pump | On while the boiler is running the pump to charge the hot water cylinder. |
 
 The heater has these entities:
 
